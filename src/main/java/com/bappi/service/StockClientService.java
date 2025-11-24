@@ -101,4 +101,38 @@ public class StockClientService {
             requestObserver.onError(ex);
         }
     }
+
+    public void startLiveTrading() throws InterruptedException {
+
+        StreamObserver<StockOrder> requestObserver = stockTradingServiceStub.liveTrading(new StreamObserver<TradeStatus>() {
+            @Override
+            public void onNext(TradeStatus tradeStatus) {
+                System.out.println("server response : " + tradeStatus);
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+                System.out.println("error : " + throwable.getMessage());
+            }
+
+            @Override
+            public void onCompleted() {
+                System.out.println("stream Completed");
+            }
+        });
+
+        // sending multiple order request from client
+        for (int i=1;i<=10;i++){
+            StockOrder stockOrder = StockOrder.newBuilder()
+                    .setOrderId("1")
+                    .setStockSymbol("APPL")
+                    .setQuantity(i*10)
+                    .setPrice(150.0+i)
+                    .setOrderType("BUY")
+                    .build();
+            requestObserver.onNext(stockOrder);
+            Thread.sleep(1000);
+        }
+        requestObserver.onCompleted();
+    }
 }
